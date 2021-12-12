@@ -45,14 +45,29 @@ print(pd4hours)
 # drop useless columns
 pd4hours.drop(columns=['Volume', 'Close time', 'Quote asset volume', 'Number of trades', 'Taker buy base asset',
                        'Taker buy quote asset volume', 'Ignore'], inplace=True)
-# del pd4hours['Volume', 'Close time', 'Quote asset volume', 'Number of trades', 'Taker buy base asset',
-#              'Taker buy quote asset volume', 'Ignore']
 
 # put datetime as index
 pd4hours.set_index('Date', inplace=True)
 
+# creation and calculation for EMA
+emaperiod = 60
+multiplier = 2/(emaperiod+1)
+pd4hours["EMA"] = ""
+somme = 0
+for i in range(0, emaperiod):
+    somme += pd4hours.iloc[i][3]
+SMA = somme / emaperiod
 print(pd4hours)
-mpf.plot(pd4hours, type='candle')
+pd4hours['EMA'] = pd4hours['EMA'].replace([1, 3], 999)
+pd4hours.at[(emaperiod-1), 'EMA'] = SMA
+# for i in range(emaperiod, len(pd4hours[0])):
+#     pd4hours.at[i, 'EMA'] = pd4hours.at[i, 'Close'] * multiplier + pd4hours.at[i-1, 'EMA'] * (1 - multiplier)
+
+
+
+# plot candlestick
+print(pd4hours)
+# mpf.plot(pd4hours, type='candle', style='binance')
 
 
 csvfile.close()
