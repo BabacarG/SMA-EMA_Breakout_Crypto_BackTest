@@ -1,7 +1,6 @@
 from binance.client import Client
 import csv
 import datetime
-import time
 import pandas as pd
 import mplfinance as mpf
 
@@ -30,17 +29,30 @@ for candlestick in candles:
 
 # convert csv into dataframe to plot
 pd4hours = pd.read_csv('4hours.csv', index_col=False, parse_dates=True, header=None)
-#convert epoch time to DateTime
-print(pd4hours)
+
+# convert epoch time to DateTime
 for i in range(len(pd4hours[0])):
     epoch = int(pd4hours.iloc[i][0]) / 1000
     date_time = datetime.datetime.fromtimestamp(epoch)
     # date_time = pd.to_datetime(epoch)
     pd4hours.at[i, 0] = date_time
+
+# give column names
+pd4hours.columns = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Close time', 'Quote asset volume',
+                    'Number of trades', 'Taker buy base asset', 'Taker buy quote asset volume', 'Ignore']
 print(pd4hours)
 
-# convert epoch time to dates
-# my_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(1502942400))
-# print(my_time)
+# drop useless columns
+pd4hours.drop(columns=['Volume', 'Close time', 'Quote asset volume', 'Number of trades', 'Taker buy base asset',
+                       'Taker buy quote asset volume', 'Ignore'], inplace=True)
+# del pd4hours['Volume', 'Close time', 'Quote asset volume', 'Number of trades', 'Taker buy base asset',
+#              'Taker buy quote asset volume', 'Ignore']
+
+# put datetime as index
+pd4hours.set_index('Date', inplace=True)
+
+print(pd4hours)
+mpf.plot(pd4hours, type='candle')
+
 
 csvfile.close()
