@@ -17,7 +17,7 @@ client = Client(api_key, api_secret)
 # return string: Open time,Open,High,Low,Close,Volume,Close time,Quote asset volume,Number of trades,
 # Taker buy base asset,Taker buy quote asset volume,Ignore.
 # candles = client.get_klines(symbol='BTCUSDT', interval=Client.KLINE_INTERVAL_4HOUR)
-candles = client.get_historical_klines("BTCUSDT", Client.KLINE_INTERVAL_4HOUR, "1 Sep, 2021")
+candles = client.get_historical_klines("BTCUSDT", Client.KLINE_INTERVAL_4HOUR, "1 Sep, 2020")
 csvfile = open('4hours.csv', 'w', newline='')
 candlestick_writer = csv.writer(csvfile, delimiter=',')
 
@@ -50,24 +50,19 @@ pd4hours.drop(columns=['Volume', 'Close time', 'Quote asset volume', 'Number of 
 pd4hours.set_index('Date', inplace=True)
 
 # creation and calculation for EMA
-emaperiod = 60
+emaperiod = 96
 multiplier = 2/(emaperiod+1)
-pd4hours["EMA"] = ""
+pd4hours["EMA"] = float("NaN")
 somme = 0
 for i in range(0, emaperiod):
     somme += pd4hours.iloc[i][3]
 SMA = somme / emaperiod
-print(pd4hours)
-pd4hours['EMA'] = pd4hours['EMA'].replace([1, 3], 999)
-pd4hours.at[(emaperiod-1), 'EMA'] = SMA
-# for i in range(emaperiod, len(pd4hours[0])):
-#     pd4hours.at[i, 'EMA'] = pd4hours.at[i, 'Close'] * multiplier + pd4hours.at[i-1, 'EMA'] * (1 - multiplier)
-
-
+pd4hours.iloc[emaperiod-1, 4] = SMA
+for i in range(emaperiod, len(pd4hours['Open'])):
+    pd4hours.iloc[i, 4] = (pd4hours.iloc[i, 3] * multiplier) + (pd4hours.iloc[i-1, 4] * (1 - multiplier))
 
 # plot candlestick
 print(pd4hours)
-# mpf.plot(pd4hours, type='candle', style='binance')
-
-
+emaPlot = mpf.make_addplot(pd4hours['EMA'])
+mpf.plot(pd4hours, type='candle', style='binance', addplot=emaPlot)
 csvfile.close()
