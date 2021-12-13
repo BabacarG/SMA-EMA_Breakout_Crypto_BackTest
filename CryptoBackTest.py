@@ -64,5 +64,5 @@ for i in range(emaperiod, len(pd4hours['Open'])):
 # plot candlestick
 print(pd4hours)
 emaPlot = mpf.make_addplot(pd4hours['EMA'])
-mpf.plot(pd4hours, type='candle', style='binance', addplot=emaPlot)
+mpf.plot(pd4hours, type='candle', style='binance', addplot=emaPlot, datetime_format=' %d-%m-%Y')
 csvfile.close()
