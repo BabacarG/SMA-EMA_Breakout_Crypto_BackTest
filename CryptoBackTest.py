@@ -40,7 +40,7 @@ for i in range(len(pd4hours[0])):
 # give column names
 pd4hours.columns = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Close time', 'Quote asset volume',
                     'Number of trades', 'Taker buy base asset', 'Taker buy quote asset volume', 'Ignore']
-print(pd4hours)
+# print(pd4hours)
 
 # drop useless columns
 pd4hours.drop(columns=['Volume', 'Close time', 'Quote asset volume', 'Number of trades', 'Taker buy base asset',
@@ -49,20 +49,55 @@ pd4hours.drop(columns=['Volume', 'Close time', 'Quote asset volume', 'Number of 
 # put datetime as index
 pd4hours.set_index('Date', inplace=True)
 
-# creation and calculation for EMA
-emaperiod = 96
-multiplier = 2/(emaperiod+1)
-pd4hours["EMA"] = float("NaN")
-somme = 0
-for i in range(0, emaperiod):
-    somme += pd4hours.iloc[i][3]
-SMA = somme / emaperiod
-pd4hours.iloc[emaperiod-1, 4] = SMA
-for i in range(emaperiod, len(pd4hours['Open'])):
-    pd4hours.iloc[i, 4] = (pd4hours.iloc[i, 3] * multiplier) + (pd4hours.iloc[i-1, 4] * (1 - multiplier))
+# data analysis
+#
+firstValue = pd4hours.iloc[0][3]
+lastValue = pd4hours.iloc[len(pd4hours['Open'])-1][3]
+assetPerformance = "%.2f" % (((lastValue-firstValue)/firstValue)*100)
 
+# loop to compute the best ema
+bestEMA = 0
+bestPerf = 0
+for j in range(2, 250):
+    # creation and calculation for EMA
+    emaperiod = j
+    multiplier = 2/(emaperiod+1)
+    pd4hours["EMA"] = float("NaN")
+    somme = 0
+    for i in range(0, emaperiod):
+        somme += pd4hours.iloc[i][3]
+    SMA = somme / emaperiod
+    pd4hours.iloc[emaperiod-1, 4] = SMA
+    for i in range(emaperiod, len(pd4hours['Open'])):
+        pd4hours.iloc[i, 4] = (pd4hours.iloc[i, 3] * multiplier) + (pd4hours.iloc[i-1, 4] * (1 - multiplier))
+
+    # ema strategy backTest
+    buying = False
+    buyPrice = 0
+    sellPrice = 0
+    K = 1
+    tradeCount = 0
+    for i in range(len(pd4hours['Open'])):
+        if (pd4hours.iloc[i][4] < pd4hours.iloc[i][3]) and not buying:
+            buyPrice = pd4hours.iloc[i][3]
+            buying = True
+        elif (pd4hours.iloc[i][4] > pd4hours.iloc[i][3]) and buying:
+            sellPrice = pd4hours.iloc[i][3]
+            tradePerf = ((sellPrice-buyPrice)/buyPrice)
+            tradeCount += 1
+            # print('trade n°'+str(tradeCount)+' '+str(tradePerf)+' %')
+            K = K*(sellPrice/buyPrice)
+            buying = False
+    stratPerf = K - 1
+    if stratPerf > bestPerf:
+        bestPerf = stratPerf
+        bestEMA = emaperiod
+    print('EMA '+str(emaperiod)+' Performance: '+str("%.2f" % stratPerf)+' % with '+str(tradeCount)+' trades')
+print('Asset Performance from '+str(pd4hours.index[0]) + ' to '
+      + str(pd4hours.index[-1]) + ' : ' + str(assetPerformance) + ' %')
+print('The best performance is: EMA '+str(bestEMA)+' - '+str("%.2f" % bestPerf))
 # plot candlestick
-print(pd4hours)
-emaPlot = mpf.make_addplot(pd4hours['EMA'])
-mpf.plot(pd4hours, type='candle', style='binance', addplot=emaPlot, datetime_format=' %d-%m-%Y')
+# print(pd4hours)
+# emaPlot = mpf.make_addplot(pd4hours['EMA'])
+# mpf.plot(pd4hours, type='candle', style='binance', addplot=emaPlot, datetime_format='%d-%m-%Y')
 csvfile.close()
