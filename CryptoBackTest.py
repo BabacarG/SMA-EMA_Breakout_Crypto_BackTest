@@ -17,7 +17,7 @@ client = Client(api_key, api_secret)
 # return string: Open time,Open,High,Low,Close,Volume,Close time,Quote asset volume,Number of trades,
 # Taker buy base asset,Taker buy quote asset volume,Ignore.
 # candles = client.get_klines(symbol='BTCUSDT', interval=Client.KLINE_INTERVAL_4HOUR)
-candles = client.get_historical_klines("BTCUSDT", Client.KLINE_INTERVAL_4HOUR, "1 Sep, 2018")
+candles = client.get_historical_klines("BTCUSDT", Client.KLINE_INTERVAL_4HOUR, "1 Sep, 2017")
 csvfile = open('4hours.csv', 'w', newline='')
 candlestick_writer = csv.writer(csvfile, delimiter=',')
 
@@ -236,9 +236,12 @@ assetPerformance = "%.2f" % (((lastValue-firstValue)/firstValue)*100)
 # BackTest with 1 EMA Buy and Sell - The best performance is: EMA 585 1625.15 % [2, 1000]
 bestEMA = 0
 bestPerf = 0
-for j in range(2, 1000):
+bestEMADD = 0
+bestEMAnt = 0
+start = 2
+end = 10
+for emaperiod in range(start, end):
     # creation and calculation for EMA
-    emaperiod = j
     multiplier = 2/(emaperiod+1)
     pd4hours["EMA"] = float("NaN")
     somme = 0
@@ -252,17 +255,19 @@ for j in range(2, 1000):
     # ema strategy backTest
     buying = False
     selling = False
+    maxDrawdown = 0
+    top = 0
     buyPrice = 0
     sellPrice = 0
     K = 1
     tradeCount = 0
-    for i in range(len(pd4hours['Open'])):
+    for i in range(end, len((pd4hours['Open']))):
         if (pd4hours.iloc[i][4] < pd4hours.iloc[i][3]) and not buying:
             buyPrice = pd4hours.iloc[i][3]
             if selling:
                 tradePerf = ((buyPrice - sellPrice) / sellPrice)
                 tradeCount += 1
-                # print('trade n°'+str(tradeCount)+' '+str(tradePerf*100)+' %')
+                # print('Buying trade n°'+str(tradeCount)+' '+str(tradePerf*100)+' %')
                 K = K * (buyPrice / sellPrice)
                 selling = False
             buying = True
@@ -271,18 +276,28 @@ for j in range(2, 1000):
             if buying:
                 tradePerf = ((sellPrice-buyPrice)/buyPrice)
                 tradeCount += 1
-                # print('trade n°'+str(tradeCount)+' '+str(tradePerf*100)+' %')
+                # print('Selling trade n°'+str(tradeCount)+' '+str(tradePerf*100)+' %')
                 K = K*(sellPrice/buyPrice)
                 buying = False
             selling = True
+        # calculation of the max drawdown
+        if K > top:
+            top = K
+        elif ((K-top)/top)*100 < maxDrawdown:
+            maxDrawdown = ((K-top)/top)*100
     stratPerf = (K - 1)*100
     if stratPerf > bestPerf:
         bestPerf = stratPerf
         bestEMA = emaperiod
-    print('EMA '+str(emaperiod)+' Performance: '+str("%.2f" % stratPerf)+' % with '+str(tradeCount)+' trades')
+        bestEMADD = maxDrawdown
+        bestEMAnt = tradeCount
+    print('EMA '+str(emaperiod)+' Performance: '+str("%.2f" % stratPerf)+' % with ' +
+          str(tradeCount)+' trades, Max Drawdown: '+str(maxDrawdown))
 print('Asset Performance from '+str(pd4hours.index[0]) + ' to '
       + str(pd4hours.index[-1]) + ' : ' + str(assetPerformance) + ' %')
-print('The best performance is: EMA '+str(bestEMA)+' '+str("%.2f" % bestPerf)+' %')
+print('The best performance is: EMA '+str(bestEMA)+' '+str("%.2f" % bestPerf) +
+      ' %, Max Drawdown: '+str("%.2f" % bestEMADD)+' %, Number of trades: '+str(bestEMAnt))
+
 
 # plot candlestick
 # print(pd4hours)
