@@ -17,7 +17,7 @@ client = Client(api_key, api_secret)
 # return string: Open time,Open,High,Low,Close,Volume,Close time,Quote asset volume,Number of trades,
 # Taker buy base asset,Taker buy quote asset volume,Ignore.
 # candles = client.get_klines(symbol='BTCUSDT', interval=Client.KLINE_INTERVAL_4HOUR)
-candles = client.get_historical_klines("BTCUSDT", Client.KLINE_INTERVAL_4HOUR, "1 Sep, 2017")
+candles = client.get_historical_klines("BTCUSDT", Client.KLINE_INTERVAL_4HOUR, "1 Sep, 2019")
 csvfile = open('4hours.csv', 'w', newline='')
 candlestick_writer = csv.writer(csvfile, delimiter=',')
 
@@ -262,17 +262,19 @@ for emaperiod in range(start, end):
     K = 1
     tradeCount = 0
     for i in range(end, len((pd4hours['Open']))):
-        if (pd4hours.iloc[i][4] < pd4hours.iloc[i][3]) and not buying:
-            buyPrice = pd4hours.iloc[i][3]
+        currentPrice = pd4hours.iloc[i][3]
+        currentEMA = pd4hours.iloc[i][4]
+        if (currentEMA < currentPrice) and not buying:
+            buyPrice = currentPrice
             if selling:
-                tradePerf = ((buyPrice - sellPrice) / sellPrice)
+                tradePerf = ((buyPrice - sellPrice) / sellPrice)*(-1)
                 tradeCount += 1
                 # print('Buying trade n°'+str(tradeCount)+' '+str(tradePerf*100)+' %')
                 K = K * (buyPrice / sellPrice)
                 selling = False
             buying = True
-        elif (pd4hours.iloc[i][4] > pd4hours.iloc[i][3]) and not selling:
-            sellPrice = pd4hours.iloc[i][3]
+        elif (currentEMA > currentPrice) and not selling:
+            sellPrice = currentPrice
             if buying:
                 tradePerf = ((sellPrice-buyPrice)/buyPrice)
                 tradeCount += 1
