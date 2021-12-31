@@ -57,6 +57,7 @@ class CryptoBackTest:
         firstValue = self.pd4hours.iloc[0][3]
         lastValue = self.pd4hours.iloc[len(self.pd4hours['Open']) - 1][3]
         self.assetPerformance = "%.2f" % (((lastValue - firstValue) / firstValue) * 100)
+        csvfile.close()
 
     def buysell1ema(self):
         print('ok')
@@ -144,13 +145,10 @@ class CryptoBackTest:
               ' %, Max Drawdown: '+str("%.2f" % saferDD)+' %, Number of trades: '+str(saferEMAnt))
 
     # plot candlestick
-    # print(pd4hours)
-    # emaPlot = mpf.make_addplot(pd4hours['EMA'])
-    # mpf.plot(pd4hours, type='candle', style='binance', addplot=emaPlot, datetime_format='%d-%m-%Y')
-    # csvfile.close()
-
-    # valuers NaN de l'EMA
-    # commencer le backtest à la même date pour toutes les EMA
+    def plot(self):
+        # emaPlot = mpf.make_addplot(self.pd4hours['EMA'])
+        # mpf.plot(self.pd4hours, type='candle', style='binance', addplot=emaPlot, datetime_format='%d-%m-%Y')
+        mpf.plot(self.pd4hours, type='candle', style='binance', datetime_format='%d-%m-%Y', warn_too_much_data=9000)
 
     # BackTest with 1 EMA Only Buying
     def buy1ema(self):
@@ -168,12 +166,12 @@ class CryptoBackTest:
             SMA = somme / emaperiod
             self.pd4hours.iloc[emaperiod-1, 4] = SMA
             for i in range(emaperiod, len(self.pd4hours['Open'])):
-                self.pd4hours.iloc[i, 4] = (self.pd4hours.iloc[i, 3] * multiplier) + (self.pd4hours.iloc[i-1, 4] * (1 - multiplier))
+                self.pd4hours.iloc[i, 4] = (self.pd4hours.iloc[i, 3] * multiplier) + \
+                                           (self.pd4hours.iloc[i-1, 4] * (1 - multiplier))
 
             # ema strategy backTest
             buying = False
             buyPrice = 0
-            sellPrice = 0
             K = 1
             tradeCount = 0
             for i in range(len(self.pd4hours['Open'])):
@@ -234,7 +232,6 @@ class CryptoBackTest:
                 # backTest
                 buying = False
                 buyPrice = 0
-                sellPrice = 0
                 K = 1
                 tradeCount = 0
                 for i in range(len(self.pd4hours['Open'])):
@@ -263,6 +260,10 @@ class CryptoBackTest:
 
     # 3 EMA strategy Only Buying
     def buy3ema(self):
+        bestPerf = 0
+        bestEMA1 = 0
+        bestEMA2 = 0
+        bestEMA3 = 0
         for l in range(2, 300, 10):
             for k in range(2, 300, 10):
                 for j in range(2, 300, 10):
@@ -306,15 +307,16 @@ class CryptoBackTest:
                     # backTest
                     buying = False
                     buyPrice = 0
-                    sellPrice = 0
                     K = 1
                     tradeCount = 0
                     for i in range(len(self.pd4hours['Open'])):
-                        if (self.pd4hours.iloc[i][4] < self.pd4hours.iloc[i][3]) and (self.pd4hours.iloc[i][5] < self.pd4hours.iloc[i][3]) and \
+                        if (self.pd4hours.iloc[i][4] < self.pd4hours.iloc[i][3]) and \
+                                (self.pd4hours.iloc[i][5] < self.pd4hours.iloc[i][3]) and\
                                 (self.pd4hours.iloc[i][6] < self.pd4hours.iloc[i][3]) and not buying:
                             buyPrice = self.pd4hours.iloc[i][3]
                             buying = True
-                        elif ((self.pd4hours.iloc[i][4] > self.pd4hours.iloc[i][3]) or (self.pd4hours.iloc[i][5] > self.pd4hours.iloc[i][3])
+                        elif ((self.pd4hours.iloc[i][4] > self.pd4hours.iloc[i][3]) or
+                              (self.pd4hours.iloc[i][5] > self.pd4hours.iloc[i][3])
                               or (self.pd4hours.iloc[i][6] > self.pd4hours.iloc[i][3])) and buying:
                             sellPrice = self.pd4hours.iloc[i][3]
                             tradePerf = ((sellPrice - buyPrice) / buyPrice)
@@ -328,8 +330,9 @@ class CryptoBackTest:
                         bestEMA1 = ema1period
                         bestEMA2 = ema2period
                         bestEMA3 = ema3period
-                    print('EMA1 ' + str(ema1period) + ', EMA2 ' + str(ema2period) + ', EMA3 ' + str(ema3period) +
+                    print('EMA ' + str(ema1period) + ', EMA ' + str(ema2period) + ', EMA ' + str(ema3period) +
                           ' Performance: ' + str("%.2f" % stratPerf) + ' % with ' + str(tradeCount) + ' trades')
-        print('Asset Performance from ' + str(self.pd4hours.index[0]) + ' to ' + str(self.pd4hours.index[-1]) + ' : ' + str(self.assetPerformance) + ' %')
-        print('The best performance is: EMA1 ' + str(bestEMA1) + ', EMA2 ' + str(bestEMA2)
-              + ', EMA3 ' + str(bestEMA2) + ' ' + str("%.2f" % bestPerf) + ' %')
+        print('Asset Performance from ' + str(self.pd4hours.index[0]) + ' to ' +
+              str(self.pd4hours.index[-1]) + ' : ' + str(self.assetPerformance) + ' %')
+        print('The best performance is: EMA ' + str(bestEMA1) + ', EMA ' + str(bestEMA2)
+              + ', EMA3 ' + str(bestEMA3) + ' ' + str("%.2f" % bestPerf) + ' %')
