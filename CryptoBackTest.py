@@ -59,6 +59,102 @@ class CryptoBackTest:
         self.assetPerformance = "%.2f" % (((lastValue - firstValue) / firstValue) * 100)
         csvfile.close()
 
+
+    def buysell1sma(self):
+        print('ok')
+        # print(self.pd4hours)
+
+        # BackTest with 1 SMA Buy and Sell
+        bestPerf = 0.0
+        bestSMA = 0
+        bestSMADD = 0
+        bestSMAnt = 0
+        saferDD = - 101
+        saferSMA = 0
+        saferPerf = 0
+        saferSMAnt = 0
+        start = 2
+        end = 10
+        for smaperiod in range(start, end+1):
+            # creation and calculation for SMA
+            self.pd4hours["SMA"] = float("NaN")
+            somme = 0
+            for i in range(len(self.pd4hours['Open'])):
+                somme += self.pd4hours.iloc[i][3]
+                if (i+1) >= smaperiod:
+                    SMA = somme / (i+1)
+                    self.pd4hours.iloc[i, 4] = SMA
+
+            # for i in range(smaperiod):
+            #     somme += self.pd4hours.iloc[i][3]
+            # SMA = somme / smaperiod
+            # self.pd4hours.iloc[smaperiod-1, 4] = SMA
+            # for i in range(smaperiod, len(self.pd4hours['Open'])):
+            #     somme += self.pd4hours.iloc[i][3]
+            #     self.pd4hours.iloc[i, 4] = somme / smaperiod
+
+            print(self.pd4hours)
+
+            # sma strategy backTest
+            buying = False
+            selling = False
+            maxDrawdown = 0
+            top = 0
+            buyPrice = 0
+            sellPrice = 0
+            K = 1.0
+            tradeCount = 0
+            for i in range(end, len((self.pd4hours['Open']))):
+                currentPrice = self.pd4hours.iloc[i][3]
+                currentSMA = self.pd4hours.iloc[i][4]
+                if (currentSMA < currentPrice) and (not buying):
+                    buyPrice = currentPrice
+                    if selling:
+                        # tradePerf = ((buyPrice - sellPrice) / sellPrice)*(-1)
+                        tradeCount += 1
+                        # print('Buying trade n°'+str(tradeCount)+' '+str(tradePerf*100)+' %')
+                        K = K * (buyPrice / sellPrice)
+                        selling = False
+                    buying = True
+                elif (currentSMA > currentPrice) and (not selling):
+                    sellPrice = currentPrice
+                    if buying:
+                        # tradePerf = ((sellPrice-buyPrice)/buyPrice)
+                        tradeCount += 1
+                        # print('Selling trade n°'+str(tradeCount)+' '+str(tradePerf*100)+' %')
+                        K = K*(sellPrice/buyPrice)
+                        buying = False
+                    selling = True
+                # calculation of the max drawdown
+                if K > top:
+                    top = K
+                elif ((K-top)/top)*100 < maxDrawdown:
+                    maxDrawdown = ((K-top)/top)*100
+            stratPerf = (K - 1)*100
+            if stratPerf > bestPerf:
+                bestPerf = stratPerf
+                bestSMA = smaperiod
+                bestSMADD = maxDrawdown
+                bestSMAnt = tradeCount
+            if maxDrawdown > saferDD:
+                saferDD = maxDrawdown
+                saferSMA = smaperiod
+                saferSMAnt = tradeCount
+                saferPerf = stratPerf
+
+            print('SMA '+str(smaperiod)+' Performance: '+str(stratPerf)+' % with ' +
+                  str(tradeCount)+' trades, Max Drawdown: '+str(maxDrawdown))
+        print('Asset Performance from '+str(self.pd4hours.index[0]) + ' to '
+              + str(self.pd4hours.index[-1]) + ' : ' + str(self.assetPerformance) + ' %')
+        print('The best performance is: SMA '+str(bestSMA)+' '+str("%.2f" % bestPerf) +
+              ' %, Max Drawdown: '+str("%.2f" % bestSMADD)+' %, Number of trades: '+str(bestSMAnt))
+        print('The safer strategy is: SMA '+str(saferSMA)+' '+str("%.2f" % saferPerf) +
+              ' %, Max Drawdown: '+str("%.2f" % saferDD)+' %, Number of trades: '+str(saferSMAnt))
+
+    # 2 - 3000 :
+    # Asset Performance from 2017-08-17 06:00:00 to 2021-12-29 05:00:00 : 1272.68 %
+    # The best performance is: EMA 216 1540.02 %, Max Drawdown: -41.35 %, Number of trades: 160
+    # The safer strategy is: EMA 1779 1154.38 %, Max Drawdown: -4.10 %, Number of trades: 73
     def buysell1ema(self):
         print('ok')
 
@@ -71,8 +167,8 @@ class CryptoBackTest:
         saferEMA = 0
         saferPerf = 0
         saferEMAnt = 0
-        start = 5
-        end = 10
+        start = 2
+        end = 5
         for emaperiod in range(start, end+1):
             # creation and calculation for EMA
             multiplier = 2/(emaperiod+1)
@@ -152,7 +248,6 @@ class CryptoBackTest:
 
     # BackTest with 1 EMA Only Buying
     def buy1ema(self):
-        print('ok')
         bestEMA = 0
         bestPerf = 0
         for j in range(2, 300):
