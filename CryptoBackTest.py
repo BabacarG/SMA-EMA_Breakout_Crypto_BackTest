@@ -17,9 +17,14 @@ class CryptoBackTest:
         # return string: Open time,Open,High,Low,Close,Volume,Close time,Quote asset volume,Number of trades,
         # Taker buy base asset,Taker buy quote asset volume,Ignore.
         # candles = client.get_klines(symbol='BTCUSDT', interval=Client.KLINE_INTERVAL_4HOUR)
+        # KLINE_INTERVAL_12HOUR,KLINE_INTERVAL_15MINUTE,KLINE_INTERVAL_1DAY,KLINE_INTERVAL_1HOUR,KLINE_INTERVAL_1MINUTE
+        # KLINE_INTERVAL_1MONTH,KLINE_INTERVAL_1WEEK, KLINE_INTERVAL_2HOUR, KLINE_INTERVAL_30MINUTE, KLINE_INTERVAL_3DAY
+        # KLINE_INTERVAL_3MINUTE,KLINE_INTERVAL_4HOUR,KLINE_INTERVAL_5MINUTE, KLINE_INTERVAL_6HOUR, KLINE_INTERVAL_8HOUR
         binanceTimeFrame = ""
         if timeFrame == "4hours":
             binanceTimeFrame = Client.KLINE_INTERVAL_4HOUR
+        elif timeFrame == "1day":
+            binanceTimeFrame = Client.KLINE_INTERVAL_1DAY
         candles = client.get_historical_klines(asset, binanceTimeFrame, startDate)
         csvfile = open('4hours.csv', 'w', newline='')
         candlestick_writer = csv.writer(csvfile, delimiter=',')
@@ -51,16 +56,18 @@ class CryptoBackTest:
         # put datetime as index
         self.pd4hours.set_index('Date', inplace=True)
         # print(pd4hours)
-
-        # data analysis
-        # Performance over time calculation
-        firstValue = self.pd4hours.iloc[0][3]
-        lastValue = self.pd4hours.iloc[len(self.pd4hours['Open']) - 1][3]
-        self.assetPerformance = "%.2f" % (((lastValue - firstValue) / firstValue) * 100)
         csvfile.close()
 
+    # 2 - 2000 (4h)
+    # Asset Performance from 2017-08-17 06:00:00 to 2021-12-29 05:00:00 : 541.19 %
+    # The best performance is: SMA 249 720.97 %, Max Drawdown: -51.75 %, Number of trades: 167
+    # The safer strategy is: SMA 1809 542.80 %, Max Drawdown: -29.64 %, Number of trades: 92
 
-    def buysell1sma(self):
+    # 2 - 300 (1d)
+    # Asset Performance from 2017-10-06 10:00:00 to 2021-12-29 05:00:00 : 979.91 %
+    # The best performance is: SMA 250 1282.69 %, Max Drawdown: -76.44 %, Number of trades: 193
+    # The safer strategy is: SMA 299 1244.23 %, Max Drawdown: -74.31 %, Number of trades: 167
+    def buysell1sma(self, start, end):
         print('ok')
         # print(self.pd4hours)
 
@@ -73,27 +80,9 @@ class CryptoBackTest:
         saferSMA = 0
         saferPerf = 0
         saferSMAnt = 0
-        start = 2
-        end = 10
         for smaperiod in range(start, end+1):
             # creation and calculation for SMA
-            self.pd4hours["SMA"] = float("NaN")
-            somme = 0
-            for i in range(len(self.pd4hours['Open'])):
-                somme += self.pd4hours.iloc[i][3]
-                if (i+1) >= smaperiod:
-                    SMA = somme / (i+1)
-                    self.pd4hours.iloc[i, 4] = SMA
-
-            # for i in range(smaperiod):
-            #     somme += self.pd4hours.iloc[i][3]
-            # SMA = somme / smaperiod
-            # self.pd4hours.iloc[smaperiod-1, 4] = SMA
-            # for i in range(smaperiod, len(self.pd4hours['Open'])):
-            #     somme += self.pd4hours.iloc[i][3]
-            #     self.pd4hours.iloc[i, 4] = somme / smaperiod
-
-            print(self.pd4hours)
+            self.pd4hours["SMA"] = self.pd4hours["Close"].rolling(smaperiod).mean()
 
             # sma strategy backTest
             buying = False
@@ -144,8 +133,11 @@ class CryptoBackTest:
 
             print('SMA '+str(smaperiod)+' Performance: '+str(stratPerf)+' % with ' +
                   str(tradeCount)+' trades, Max Drawdown: '+str(maxDrawdown))
-        print('Asset Performance from '+str(self.pd4hours.index[0]) + ' to '
-              + str(self.pd4hours.index[-1]) + ' : ' + str(self.assetPerformance) + ' %')
+        firstValue = self.pd4hours.iloc[end][3]
+        lastValue = self.pd4hours.iloc[len(self.pd4hours['Open']) - 1][3]
+        assetPerformance = "%.2f" % (((lastValue - firstValue) / firstValue) * 100)
+        print('Asset Performance from '+str(self.pd4hours.index[end]) + ' to '
+              + str(self.pd4hours.index[-1]) + ' : ' + str(assetPerformance) + ' %')
         print('The best performance is: SMA '+str(bestSMA)+' '+str("%.2f" % bestPerf) +
               ' %, Max Drawdown: '+str("%.2f" % bestSMADD)+' %, Number of trades: '+str(bestSMAnt))
         print('The safer strategy is: SMA '+str(saferSMA)+' '+str("%.2f" % saferPerf) +
@@ -239,6 +231,7 @@ class CryptoBackTest:
               ' %, Max Drawdown: '+str("%.2f" % bestEMADD)+' %, Number of trades: '+str(bestEMAnt))
         print('The safer strategy is: EMA '+str(saferEMA)+' '+str("%.2f" % saferPerf) +
               ' %, Max Drawdown: '+str("%.2f" % saferDD)+' %, Number of trades: '+str(saferEMAnt))
+        # self.plot()
 
     # plot candlestick
     def plot(self):
