@@ -80,6 +80,14 @@ class CryptoBackTest:
         saferSMA = 0
         saferPerf = 0
         saferSMAnt = 0
+        bestSTA = 0
+        bestBTA = 0
+        bestWTA = 0
+        bestLTA = 0
+        saferSTA = 0
+        saferBTA = 0
+        saferWTA = 0
+        saferLTA = 0
         for smaperiod in range(start, end+1):
             # creation and calculation for SMA
             self.pd4hours["SMA"] = self.pd4hours["Close"].rolling(smaperiod).mean()
@@ -93,13 +101,30 @@ class CryptoBackTest:
             sellPrice = 0
             K = 1.0
             tradeCount = 0
+
+            sellingTradesSum = 0
+            buyingTradesSum = 0
+            winningTradesSum = 0
+            losingTradesSum = 0
+            sellingTradesCount = 0
+            buyingTradesCount = 0
+            winningTradesCount = 0
+            losingTradesCount = 0
             for i in range(end, len((self.pd4hours['Open']))):
                 currentPrice = self.pd4hours.iloc[i][3]
                 currentSMA = self.pd4hours.iloc[i][4]
                 if (currentSMA < currentPrice) and (not buying):
                     buyPrice = currentPrice
                     if selling:
-                        # tradePerf = ((buyPrice - sellPrice) / sellPrice)*(-1)
+                        tradePerf = ((buyPrice - sellPrice) / sellPrice)*(-1)
+                        sellingTradesSum += tradePerf
+                        sellingTradesCount += 1
+                        if tradePerf > 0:
+                            winningTradesSum += tradePerf
+                            winningTradesCount += 1
+                        else:
+                            losingTradesSum += tradePerf
+                            losingTradesCount += 1
                         tradeCount += 1
                         # print('Buying trade n°'+str(tradeCount)+' '+str(tradePerf*100)+' %')
                         K = K * (buyPrice / sellPrice)
@@ -108,7 +133,15 @@ class CryptoBackTest:
                 elif (currentSMA > currentPrice) and (not selling):
                     sellPrice = currentPrice
                     if buying:
-                        # tradePerf = ((sellPrice-buyPrice)/buyPrice)
+                        tradePerf = ((sellPrice-buyPrice)/buyPrice)
+                        buyingTradesSum += tradePerf
+                        buyingTradesCount += 1
+                        if tradePerf > 0:
+                            winningTradesSum += tradePerf
+                            winningTradesCount += 1
+                        else:
+                            losingTradesSum += tradePerf
+                            losingTradesCount += 1
                         tradeCount += 1
                         # print('Selling trade n°'+str(tradeCount)+' '+str(tradePerf*100)+' %')
                         K = K*(sellPrice/buyPrice)
@@ -119,29 +152,59 @@ class CryptoBackTest:
                     top = K
                 elif ((K-top)/top)*100 < maxDrawdown:
                     maxDrawdown = ((K-top)/top)*100
+
+            sellingTradesAvg = sellingTradesSum / sellingTradesCount
+            buyingTradesAvg = buyingTradesSum / buyingTradesCount
+            winningTradesAvg = winningTradesSum / winningTradesCount
+            losingTradesAvg = losingTradesSum / losingTradesCount
+
             stratPerf = (K - 1)*100
             if stratPerf > bestPerf:
                 bestPerf = stratPerf
                 bestSMA = smaperiod
                 bestSMADD = maxDrawdown
                 bestSMAnt = tradeCount
+                bestSTA = sellingTradesAvg
+                bestBTA = buyingTradesAvg
+                bestWTA = winningTradesAvg
+                bestLTA = losingTradesAvg
             if maxDrawdown > saferDD:
                 saferDD = maxDrawdown
                 saferSMA = smaperiod
                 saferSMAnt = tradeCount
                 saferPerf = stratPerf
+                saferSTA = sellingTradesAvg
+                saferBTA = buyingTradesAvg
+                saferWTA = winningTradesAvg
+                saferLTA = losingTradesAvg
 
             print('SMA '+str(smaperiod)+' Performance: '+str(stratPerf)+' % with ' +
                   str(tradeCount)+' trades, Max Drawdown: '+str(maxDrawdown))
         firstValue = self.pd4hours.iloc[end][3]
         lastValue = self.pd4hours.iloc[len(self.pd4hours['Open']) - 1][3]
         assetPerformance = "%.2f" % (((lastValue - firstValue) / firstValue) * 100)
+
+        print(" ")
         print('Asset Performance from '+str(self.pd4hours.index[end]) + ' to '
               + str(self.pd4hours.index[-1]) + ' : ' + str(assetPerformance) + ' %')
-        print('The best performance is: SMA '+str(bestSMA)+' '+str("%.2f" % bestPerf) +
-              ' %, Max Drawdown: '+str("%.2f" % bestSMADD)+' %, Number of trades: '+str(bestSMAnt))
-        print('The safer strategy is: SMA '+str(saferSMA)+' '+str("%.2f" % saferPerf) +
-              ' %, Max Drawdown: '+str("%.2f" % saferDD)+' %, Number of trades: '+str(saferSMAnt))
+        print(" ")
+
+        print('The best performance is: SMA '+str(bestSMA)+' '+str("%.2f" % bestPerf)+' %')
+        print('Number of trades: '+str(bestSMAnt))
+        print('Max Drawdown: '+str("%.2f" % bestSMADD)+' %')
+        print('Winning trades average: ' + str("%.2f" % (bestWTA*100))+' %')
+        print('Losing trades average: ' + str("%.2f" % (bestLTA * 100))+' %')
+        print('Buying trades average: ' + str("%.2f" % (bestBTA * 100))+' %')
+        print('Selling trades average: ' + str("%.2f" % (bestSTA * 100))+' %')
+        print(" ")
+
+        print('The safer strategy is: SMA '+str(saferSMA)+' '+str("%.2f" % saferPerf) + ' %')
+        print('Number of trades: ' + str(saferSMAnt))
+        print('Max Drawdown: '+str("%.2f" % saferDD)+' %')
+        print('Winning trades average: ' + str("%.2f" % (saferWTA * 100))+' %')
+        print('Losing trades average: ' + str("%.2f" % (saferLTA * 100))+' %')
+        print('Buying trades average: ' + str("%.2f" % (saferBTA * 100))+' %')
+        print('Selling trades average: ' + str("%.2f" % (saferSTA * 100))+' %')
 
     # 2 - 3000 :
     # Asset Performance from 2017-08-17 06:00:00 to 2021-12-29 05:00:00 : 1272.68 %
