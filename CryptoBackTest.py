@@ -34,6 +34,10 @@ class CryptoBackTest:
             binanceTimeFrame = Client.KLINE_INTERVAL_3MINUTE
         elif timeFrame == "30min":
             binanceTimeFrame = Client.KLINE_INTERVAL_30MINUTE
+        elif timeFrame == "3day":
+            binanceTimeFrame = Client.KLINE_INTERVAL_3DAY
+        elif timeFrame == "1hour":
+            binanceTimeFrame = Client.KLINE_INTERVAL_1HOUR
 
         candles = client.get_historical_klines(asset, binanceTimeFrame, startDate)
         csvfile = open('OHLC.csv', 'w', newline='')
@@ -69,17 +73,37 @@ class CryptoBackTest:
         csvfile.close()
         print("Data collected")
 
-    # 2 - 2000 (4h)
-    # Asset Performance from 2017-08-17 06:00:00 to 2021-12-29 05:00:00 : 541.19 %
-    # The best performance is: SMA 249 720.97 %(+179,78), Max Drawdown: -51.75 %, Number of trades: 167
-    # The safer strategy is: SMA 1809 542.80 %, Max Drawdown: -29.64 %, Number of trades: 92
+    # 2-7200 (1h)
+    # Asset Performance from 2018-06-14 22:00:00 to 2022-01-17 08:00:00 : 541.55 %
+    # The best performance is SMA 172: 5935.73 %
+    # Number of trades: 942
+    # Max Drawdown: -31.98 %
+    # Winning trades average: 7.50 %
+    # Losing trades average: -0.77 %
+    # Buying trades average: 0.74 %
+    # Selling trades average: 0.10 %
+
+    # 2 - 1800 (4h)
+    # Asset Performance from 2018-06-14 14:00:00 to 2022-01-06 13:00:00 : 576.98 %
+    # The best performance is SMA 261: 5949.76 %
+    # Number of trades: 140
+    # Max Drawdown: -31.37 %
+    # Winning trades average: 36.81 %
+    # Losing trades average: -1.43 %
+    # Buying trades average: 6.87 %
+    # Selling trades average: 0.64 %
 
     # 2 - 300 (1d)
-    # Asset Performance from 2017-10-06 10:00:00 to 2021-12-29 05:00:00 : 979.91 %
-    # The best performance is: SMA 250 1282.69 %(+302,78), Max Drawdown: -76.44 %, Number of trades: 193
-    # The safer strategy is: SMA 299 1244.23 %, Max Drawdown: -74.31 %, Number of trades: 167
+    # Asset Performance from 2017-08-29 18:00:00 to 2022-01-19 11:00:00 : 821.54 %
+    # The best performance is SMA 77: 2520.99 %
+    # Number of trades: 1957
+    # Max Drawdown: -48.54 %
+    # Winning trades average: 5.19 %
+    # Losing trades average: -0.87 %
+    # Buying trades average: 0.41 %
+    # Selling trades average: 0.05 %
     def buysell1sma(self, start, end):
-        print('Processing the backtest')
+        print('Processing the backtest from ' + str(self.pdOHLC.index[end]))
         # print(self.pd4hours)
 
         # BackTest with 1 SMA Buy and Sell
@@ -129,7 +153,7 @@ class CryptoBackTest:
                 if (currentSMA < currentPrice) and (not buying):
                     buyPrice = currentPrice
                     if selling:
-                        tradePerf = ((buyPrice - sellPrice) / sellPrice)*(-1)
+                        tradePerf = ((sellPrice - buyPrice) / sellPrice)
                         sellingTradesSum += tradePerf
                         sellingTradesCount += 1
                         if tradePerf > 0:
@@ -140,7 +164,7 @@ class CryptoBackTest:
                             losingTradesCount += 1
                         tradeCount += 1
                         # print('Buying trade n°'+str(tradeCount)+' '+str(tradePerf*100)+' %')
-                        K = K * (buyPrice / sellPrice)
+                        K = K * (2 - (buyPrice / sellPrice))
                         selling = False
                     buying = True
                 elif (currentSMA > currentPrice) and (not selling):
@@ -166,11 +190,22 @@ class CryptoBackTest:
                     top = K
                 elif ((K-top)/top)*100 < maxDrawdown:
                     maxDrawdown = ((K-top)/top)*100
-
-            sellingTradesAvg = sellingTradesSum / sellingTradesCount
-            buyingTradesAvg = buyingTradesSum / buyingTradesCount
-            winningTradesAvg = winningTradesSum / winningTradesCount
-            losingTradesAvg = losingTradesSum / losingTradesCount
+            if sellingTradesCount == 0:
+                sellingTradesAvg
+            else:
+                sellingTradesAvg = sellingTradesSum / sellingTradesCount
+            if buyingTradesCount == 0:
+                buyingTradesAvg = 0
+            else:
+                buyingTradesAvg = buyingTradesSum / buyingTradesCount
+            if winningTradesCount == 0:
+                winningTradesAvg = 0
+            else:
+                winningTradesAvg = winningTradesSum / winningTradesCount
+            if losingTradesCount == 0:
+                losingTradesAvg = 0
+            else:
+                losingTradesAvg = losingTradesSum / losingTradesCount
 
             stratPerf = ((K - self.pdOHLC.iloc[0][3])/self.pdOHLC.iloc[0][3])*100
             if stratPerf > bestPerf:
