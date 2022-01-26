@@ -38,6 +38,8 @@ class CryptoBackTest:
             binanceTimeFrame = Client.KLINE_INTERVAL_3DAY
         elif timeFrame == "1hour":
             binanceTimeFrame = Client.KLINE_INTERVAL_1HOUR
+        elif timeFrame == "3days":
+            binanceTimeFrame = Client.KLINE_INTERVAL_3DAY
 
         candles = client.get_historical_klines(asset, binanceTimeFrame, startDate)
         csvfile = open('OHLC.csv', 'w', newline='')
@@ -74,34 +76,44 @@ class CryptoBackTest:
         print("Data collected")
 
     # 2-7200 (1h)
-    # Asset Performance from 2018-06-14 22:00:00 to 2022-01-17 08:00:00 : 541.55 %
-    # The best performance is SMA 172: 5935.73 %
-    # Number of trades: 942
-    # Max Drawdown: -31.98 %
-    # Winning trades average: 7.50 %
-    # Losing trades average: -0.77 %
-    # Buying trades average: 0.74 %
-    # Selling trades average: 0.10 %
+    # Asset Performance from 2018-06-14 22:00:00 to 2022-01-21 14:00:00 : 478.90 %
+    # The best performance is SMA 1049: 3668.56 %
+    # Number of trades: 280
+    # Max Drawdown: -34.35 %
+    # Winning trades average: 26.42 %
+    # Losing trades average: -0.76 %
+    # Buying trades average: 3.41 %
+    # Selling trades average: 0.32 %
 
     # 2 - 1800 (4h)
-    # Asset Performance from 2018-06-14 14:00:00 to 2022-01-06 13:00:00 : 576.98 %
-    # The best performance is SMA 261: 5949.76 %
+    # Asset Performance from 2018-06-14 14:00:00 to 2022-01-14 21:00:00 : 578.71 %
+    # The best performance is SMA 261: 3695.21 %
     # Number of trades: 140
-    # Max Drawdown: -31.37 %
+    # Max Drawdown: -32.51 %
     # Winning trades average: 36.81 %
     # Losing trades average: -1.43 %
     # Buying trades average: 6.87 %
     # Selling trades average: 0.64 %
 
     # 2 - 300 (1d)
-    # Asset Performance from 2017-08-29 18:00:00 to 2022-01-19 11:00:00 : 821.54 %
-    # The best performance is SMA 77: 2520.99 %
-    # Number of trades: 1957
-    # Max Drawdown: -48.54 %
-    # Winning trades average: 5.19 %
-    # Losing trades average: -0.87 %
-    # Buying trades average: 0.41 %
-    # Selling trades average: 0.05 %
+    # Asset Performance from 2018-06-13 02:00:00 to 2021-10-22 02:00:00 : 864.41 %
+    # The best performance is SMA 63: 2250.74 %
+    # Number of trades: 51
+    # Max Drawdown: -34.93 %
+    # Winning trades average: 48.88 %
+    # Losing trades average: -3.85 %
+    # Buying trades average: 22.51 %
+    # Selling trades average: 1.23 %
+
+    # 2 - 100 (3d)
+    # Asset Performance from 2018-06-13 02:00:00 to 2021-08-11 02:00:00 : 648.17 %
+    # The best performance is SMA 25: 1866.31 %
+    # Number of trades: 31
+    # Max Drawdown: -33.47 %
+    # Winning trades average: 59.86 %
+    # Losing trades average: -5.12 %
+    # Buying trades average: 34.71 %
+    # Selling trades average: 2.22 %
     def buysell1sma(self, start, end):
         print('Processing the backtest from ' + str(self.pdOHLC.index[end]))
         # print(self.pd4hours)
@@ -257,7 +269,7 @@ class CryptoBackTest:
         print('Selling trades average: ' + str("%.2f" % (saferSTA * 100))+' %')
 
         self.pdOHLC = bestChart
-        self.plot(False, False, True)
+        self.plot(False, True, True)
 
     # 2 - 3000 :
     # Asset Performance from 2017-08-17 06:00:00 to 2021-12-29 05:00:00 : 1272.68 %
@@ -351,20 +363,28 @@ class CryptoBackTest:
 
     # plot candlestick
     def plot(self, ema, sma, equity):
-        if ema:
-            emaPlot = mpf.make_addplot(self.pdOHLC['EMA'])
+        if ema and equity:
+            emaPlot = [mpf.make_addplot(self.pdOHLC['EMA'], color='g'), mpf.make_addplot(self.pdOHLC['Equity'])]
             mpf.plot(self.pdOHLC, type='candle', style='binance', addplot=emaPlot, datetime_format='%d-%m-%Y',
-                     warn_too_much_data=9000)
-        elif sma:
-            smaPlot = mpf.make_addplot(self.pdOHLC['SMA'])
+                     warn_too_much_data=99000, scale_width_adjustment=dict(lines=0.85))
+        elif sma and equity:
+            smaPlot = [mpf.make_addplot(self.pdOHLC['SMA'], color='g'), mpf.make_addplot(self.pdOHLC['Equity'])]
             mpf.plot(self.pdOHLC, type='candle', style='binance', addplot=smaPlot, datetime_format='%d-%m-%Y',
-                     warn_too_much_data=9000)
+                     warn_too_much_data=99000, scale_width_adjustment=dict(lines=0.85))
+        elif ema:
+            emaPlot = mpf.make_addplot(self.pdOHLC['EMA'], color='g')
+            mpf.plot(self.pdOHLC, type='candle', style='binance', addplot=emaPlot, datetime_format='%d-%m-%Y',
+                     warn_too_much_data=99000, scale_width_adjustment=dict(lines=0.85))
+        elif sma:
+            smaPlot = mpf.make_addplot(self.pdOHLC['SMA'], color='g')
+            mpf.plot(self.pdOHLC, type='candle', style='binance', addplot=smaPlot, datetime_format='%d-%m-%Y',
+                     warn_too_much_data=99000, scale_width_adjustment=dict(lines=0.85))
         elif equity:
             equityPlot = mpf.make_addplot(self.pdOHLC['Equity'])
             mpf.plot(self.pdOHLC, type='candle', style='binance', addplot=equityPlot, datetime_format='%d-%m-%Y',
-                     warn_too_much_data=9000)
+                     warn_too_much_data=99000, scale_width_adjustment=dict(lines=0.85))
         else:
-            mpf.plot(self.pdOHLC, type='candle', style='binance', datetime_format='%d-%m-%Y', warn_too_much_data=9000)
+            mpf.plot(self.pdOHLC, type='candle', style='binance', datetime_format='%d-%m-%Y', warn_too_much_data=99000)
 
     # BackTest with 1 EMA Only Buying
     def buy1ema(self):
