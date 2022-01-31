@@ -18,7 +18,7 @@
   - The range of SMA/EMA periods you wan't to compare
   - The start date of the backtest
   
-  (Note that the date you choose will be shifted by: higherSMA/EMA * Timeframe. Exemple: I choose the backtest to start the 1st of january 2020, my higher SMA/EMA to compare 
+  (Note that the date you choose will be shifted by: (higherSMA/EMA * Timeframe). Exemple: I choose the backtest to start the 1st of january 2020, my higher SMA/EMA to compare 
   is the SMA/EMA with a period of 80 and the timeframe is daily. Then the start date will be delayed by higherSMA/EMA * Timeframe = 80 * 1 day = 80 days. The strategy will
   therefor be applied from March 21, 2020. The start date of Binance data may also affect the start date of the backtest.)
 
