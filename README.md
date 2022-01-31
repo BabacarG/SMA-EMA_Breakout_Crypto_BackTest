@@ -1,4 +1,4 @@
-# SMA_Breakout_Strategy_BackTest
+# SMA-EMA_Breakout_Strategy_BackTest
   A tool connected to the binance API to determine which moving average period is the most optimal to use for a given cryptocurrency.
 
   Warning: This not investment advice.
