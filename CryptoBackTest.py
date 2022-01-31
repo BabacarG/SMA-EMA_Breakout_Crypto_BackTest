@@ -9,6 +9,7 @@ class CryptoBackTest:
     def __init__(self, api_key, api_secret, asset, timeFrame, startDate):
         print("Collecting Data...")
         client = Client(api_key, api_secret)
+        self.assetTicker = asset
         # prices = client.get_all_tickers()
         #
         # for price in prices:
@@ -16,29 +17,39 @@ class CryptoBackTest:
 
         # return string: Open time,Open,High,Low,Close,Volume,Close time,Quote asset volume,Number of trades,
         # Taker buy base asset,Taker buy quote asset volume,Ignore.
-        # candles = client.get_klines(symbol='BTCUSDT', interval=Client.KLINE_INTERVAL_4HOUR)
-        # KLINE_INTERVAL_12HOUR,KLINE_INTERVAL_15MINUTE,KLINE_INTERVAL_1DAY,KLINE_INTERVAL_1HOUR,KLINE_INTERVAL_1MINUTE
-        # KLINE_INTERVAL_1MONTH,KLINE_INTERVAL_1WEEK, KLINE_INTERVAL_2HOUR, KLINE_INTERVAL_30MINUTE, KLINE_INTERVAL_3DAY
-        # KLINE_INTERVAL_3MINUTE,KLINE_INTERVAL_4HOUR,KLINE_INTERVAL_5MINUTE, KLINE_INTERVAL_6HOUR, KLINE_INTERVAL_8HOUR
+
         binanceTimeFrame = ""
-        if timeFrame == "4h":
-            binanceTimeFrame = Client.KLINE_INTERVAL_4HOUR
-        elif timeFrame == "1d":
-            binanceTimeFrame = Client.KLINE_INTERVAL_1DAY
-        elif timeFrame == "1min":
+        if timeFrame == "1min":
             binanceTimeFrame = Client.KLINE_INTERVAL_1MINUTE
-        elif timeFrame == "15min":
-            binanceTimeFrame = Client.KLINE_INTERVAL_15MINUTE
         elif timeFrame == "3min":
             binanceTimeFrame = Client.KLINE_INTERVAL_3MINUTE
+        elif timeFrame == "5min":
+            binanceTimeFrame = Client.KLINE_INTERVAL_5MINUTE
+        elif timeFrame == "15min":
+            binanceTimeFrame = Client.KLINE_INTERVAL_15MINUTE
         elif timeFrame == "30min":
             binanceTimeFrame = Client.KLINE_INTERVAL_30MINUTE
-        elif timeFrame == "3d":
-            binanceTimeFrame = Client.KLINE_INTERVAL_3DAY
         elif timeFrame == "1h":
             binanceTimeFrame = Client.KLINE_INTERVAL_1HOUR
+        elif timeFrame == "2h":
+            binanceTimeFrame = Client.KLINE_INTERVAL_2HOUR
+        elif timeFrame == "4h":
+            binanceTimeFrame = Client.KLINE_INTERVAL_4HOUR
+        elif timeFrame == "6h":
+            binanceTimeFrame = Client.KLINE_INTERVAL_6HOUR
+        elif timeFrame == "8h":
+            binanceTimeFrame = Client.KLINE_INTERVAL_8HOUR
+        elif timeFrame == "12h":
+            binanceTimeFrame = Client.KLINE_INTERVAL_12HOUR
+        elif timeFrame == "1d":
+            binanceTimeFrame = Client.KLINE_INTERVAL_1DAY
         elif timeFrame == "3d":
             binanceTimeFrame = Client.KLINE_INTERVAL_3DAY
+        elif timeFrame == "1w":
+            binanceTimeFrame = Client.KLINE_INTERVAL_1WEEK
+        elif timeFrame == "1m":
+            binanceTimeFrame = Client.KLINE_INTERVAL_1MONTH
+
 
         candles = client.get_historical_klines(asset, binanceTimeFrame, startDate)
         csvfile = open('OHLC.csv', 'w', newline='')
@@ -107,18 +118,10 @@ class CryptoBackTest:
         bestSMA = 0
         bestSMADD = 0
         bestSMAnt = 0
-        saferDD = - 101
-        saferSMA = 0
-        saferPerf = 0
-        saferSMAnt = 0
         bestSTA = 0
         bestBTA = 0
         bestWTA = 0
         bestLTA = 0
-        saferSTA = 0
-        saferBTA = 0
-        saferWTA = 0
-        saferLTA = 0
         bestChart = self.pdOHLC.copy(deep=True)
         for smaperiod in range(start, end + 1):
             # creation and calculation for SMA
@@ -214,15 +217,6 @@ class CryptoBackTest:
                 bestWTA = winningTradesAvg
                 bestLTA = losingTradesAvg
                 bestChart = self.pdOHLC.copy(deep=True)
-            if maxDrawdown > saferDD:
-                saferDD = maxDrawdown
-                saferSMA = smaperiod
-                saferSMAnt = tradeCount
-                saferPerf = stratPerf
-                saferSTA = sellingTradesAvg
-                saferBTA = buyingTradesAvg
-                saferWTA = winningTradesAvg
-                saferLTA = losingTradesAvg
 
             print('SMA ' + str(smaperiod) + ' Performance: ' + str(stratPerf) + ' % with ' +
                   str(tradeCount) + ' trades, Max Drawdown: ' + str(maxDrawdown))
@@ -231,7 +225,7 @@ class CryptoBackTest:
         assetPerformance = "%.2f" % (((lastValue - firstValue) / firstValue) * 100)
 
         print(" ")
-        print('Asset Performance from ' + str(self.pdOHLC.index[end]) + ' to '
+        print(self.assetTicker + ' performance from ' + str(self.pdOHLC.index[end]) + ' to '
               + str(self.pdOHLC.index[-1]) + ' : ' + str(assetPerformance) + ' %')
         print(" ")
 
@@ -242,15 +236,6 @@ class CryptoBackTest:
         print('Losing trades average: ' + str("%.2f" % (bestLTA * 100)) + ' %')
         print('Buying trades average: ' + str("%.2f" % (bestBTA * 100)) + ' %')
         print('Selling trades average: ' + str("%.2f" % (bestSTA * 100)) + ' %')
-        print(" ")
-
-        print('The safer strategy is SMA ' + str(saferSMA) + ': ' + str("%.2f" % saferPerf) + ' %')
-        print('Number of trades: ' + str(saferSMAnt))
-        print('Max Drawdown: ' + str("%.2f" % saferDD) + ' %')
-        print('Winning trades average: ' + str("%.2f" % (saferWTA * 100)) + ' %')
-        print('Losing trades average: ' + str("%.2f" % (saferLTA * 100)) + ' %')
-        print('Buying trades average: ' + str("%.2f" % (saferBTA * 100)) + ' %')
-        print('Selling trades average: ' + str("%.2f" % (saferSTA * 100)) + ' %')
 
         self.pdOHLC = bestChart
         self.plot(False, True, True)
@@ -348,206 +333,25 @@ class CryptoBackTest:
     # plot candlestick
     def plot(self, ema, sma, equity):
         if ema and equity:
-            otherPlots = [mpf.make_addplot(self.pdOHLC['EMA'], color='g'), mpf.make_addplot(self.pdOHLC['Equity'])]
+            otherPlots = [mpf.make_addplot(self.pdOHLC['EMA'], color='g', secondary_y=False),
+                          mpf.make_addplot(self.pdOHLC['Equity'], secondary_y=False)]
+            self.assetTicker = self.assetTicker + " (Candlestick), EMA (Green), Equity (Blue)"
         elif sma and equity:
             otherPlots = [mpf.make_addplot(self.pdOHLC['SMA'], color='g', secondary_y=False),
                           mpf.make_addplot(self.pdOHLC['Equity'], secondary_y=False)]
+            self.assetTicker = self.assetTicker + " (Candlestick), SMA (Green), Equity (Blue)"
         elif ema:
             otherPlots = mpf.make_addplot(self.pdOHLC['EMA'], color='g', secondary_y=False)
+            self.assetTicker = self.assetTicker + " (Candlestick), EMA (Green)"
         elif sma:
             otherPlots = mpf.make_addplot(self.pdOHLC['SMA'], color='g', secondary_y=False)
+            self.assetTicker = self.assetTicker + " (Candlestick), SMA (Green)"
         elif equity:
             otherPlots = mpf.make_addplot(self.pdOHLC['Equity'], secondary_y=False)
+            self.assetTicker = self.assetTicker + " (Candlestick), Equity (Blue)"
         else:
             data = pd.DataFrame()
             otherPlots = mpf.make_addplot(data)
         mpf.plot(self.pdOHLC, type='candle', style='binance', datetime_format='%d-%m-%Y', warn_too_much_data=99000,
-                 addplot=otherPlots, scale_width_adjustment=dict(lines=0.85))
-
-    # BackTest with 1 EMA Only Buying
-    def buy1ema(self):
-        bestEMA = 0
-        bestPerf = 0
-        for j in range(2, 300):
-            # creation and calculation for EMA
-            emaperiod = j
-            multiplier = 2 / (emaperiod + 1)
-            self.pdOHLC["EMA"] = float("NaN")
-            somme = 0
-            for i in range(0, emaperiod):
-                somme += self.pdOHLC.iloc[i][3]
-            SMA = somme / emaperiod
-            self.pdOHLC.iloc[emaperiod - 1, 4] = SMA
-            for i in range(emaperiod, len(self.pdOHLC['Open'])):
-                self.pdOHLC.iloc[i, 4] = (self.pdOHLC.iloc[i, 3] * multiplier) + \
-                                         (self.pdOHLC.iloc[i - 1, 4] * (1 - multiplier))
-
-            # ema strategy backTest
-            buying = False
-            buyPrice = 0
-            K = 1
-            tradeCount = 0
-            for i in range(len(self.pdOHLC['Open'])):
-                if (self.pdOHLC.iloc[i][4] < self.pdOHLC.iloc[i][3]) and not buying:
-                    buyPrice = self.pdOHLC.iloc[i][3]
-                    buying = True
-                elif (self.pdOHLC.iloc[i][4] > self.pdOHLC.iloc[i][3]) and buying:
-                    sellPrice = self.pdOHLC.iloc[i][3]
-                    # tradePerf = ((sellPrice - buyPrice) / buyPrice)
-                    tradeCount += 1
-                    # print('trade n°'+str(tradeCount)+' '+str(tradePerf*100)+' %')
-                    K = K * (sellPrice / buyPrice)
-                    buying = False
-            stratPerf = (K - 1) * 100
-            if stratPerf > bestPerf:
-                bestPerf = stratPerf
-                bestEMA = emaperiod
-            print('EMA ' + str(emaperiod) + ' Performance: ' + str("%.2f" % stratPerf) + ' % with ' + str(
-                tradeCount) + ' trades')
-        print('Asset Performance from ' + str(self.pdOHLC.index[0]) + ' to '
-              + str(self.pdOHLC.index[-1]) + ' : ' + str(self.assetPerformance) + ' %')
-        print('The best performance is: EMA ' + str(bestEMA) + ' ' + str("%.2f" % bestPerf) + ' %')
-
-    # BackTest with 2 EMA Only Buying
-    def buy2ema(self):
-        print('ok')
-        bestEMA1 = 0
-        bestEMA2 = 0
-        bestPerf = 0
-
-        for k in range(2, 300, 10):
-            for j in range(2, 300, 10):
-                # creation and calculation for EMA
-                ema1period = j
-                ema2period = k
-                multiplier1 = 2 / (ema1period + 1)
-                multiplier2 = 2 / (ema2period + 1)
-                self.pdOHLC["EMA1"] = float("NaN")
-                self.pdOHLC["EMA2"] = float("NaN")
-
-                # fill the EMA columns with values
-                somme = 0
-                for i in range(0, ema1period):
-                    somme += self.pdOHLC.iloc[i][3]
-                SMA = somme / ema1period
-                self.pdOHLC.iloc[ema1period - 1, 4] = SMA
-                for i in range(ema1period, len(self.pdOHLC['Open'])):
-                    self.pdOHLC.iloc[i, 4] = (self.pdOHLC.iloc[i, 3] * multiplier1) + \
-                                             (self.pdOHLC.iloc[i - 1, 4] * (1 - multiplier1))
-                somme = 0
-                for i in range(0, ema2period):
-                    somme += self.pdOHLC.iloc[i][3]
-                SMA = somme / ema2period
-                self.pdOHLC.iloc[ema2period - 1, 5] = SMA
-                for i in range(ema2period, len(self.pdOHLC['Open'])):
-                    self.pdOHLC.iloc[i, 5] = (self.pdOHLC.iloc[i, 3] * multiplier2) + \
-                                             (self.pdOHLC.iloc[i - 1, 4] * (1 - multiplier2))
-
-                # backTest
-                buying = False
-                buyPrice = 0
-                K = 1
-                tradeCount = 0
-                for i in range(len(self.pdOHLC['Open'])):
-                    if (self.pdOHLC.iloc[i][4] < self.pdOHLC.iloc[i][3]) and \
-                            (self.pdOHLC.iloc[i][5] < self.pdOHLC.iloc[i][3]) and not buying:
-                        buyPrice = self.pdOHLC.iloc[i][3]
-                        buying = True
-                    elif ((self.pdOHLC.iloc[i][4] > self.pdOHLC.iloc[i][3]) or
-                          (self.pdOHLC.iloc[i][5] > self.pdOHLC.iloc[i][3])) and buying:
-                        sellPrice = self.pdOHLC.iloc[i][3]
-                        # tradePerf = ((sellPrice - buyPrice) / buyPrice)
-                        tradeCount += 1
-                        # print('trade n°'+str(tradeCount)+' '+str(tradePerf*100)+' %')
-                        K = K * (sellPrice / buyPrice)
-                        buying = False
-                stratPerf = (K - 1) * 100
-                if stratPerf > bestPerf:
-                    bestPerf = stratPerf
-                    bestEMA1 = ema1period
-                    bestEMA2 = ema2period
-                print('EMA ' + str(ema1period) + ', EMA ' + str(ema2period) + ' Performance: '
-                      + str("%.2f" % stratPerf) + ' % with ' + str(tradeCount) + ' trades')
-        print('Asset Performance from ' + str(self.pdOHLC.index[0]) + ' to '
-              + str(self.pdOHLC.index[-1]) + ' : ' + str(self.assetPerformance) + ' %')
-        print('The best performance is: EMA1 ' + str(bestEMA1) + ', EMA2 ' + str(bestEMA2) + ' ' + str(
-            "%.2f" % bestPerf) + ' %')
-
-    # 3 EMA strategy Only Buying
-    def buy3ema(self):
-        bestPerf = 0
-        bestEMA1 = 0
-        bestEMA2 = 0
-        bestEMA3 = 0
-        for l in range(2, 300, 10):
-            for k in range(2, 300, 10):
-                for j in range(2, 300, 10):
-                    # creation and calculation for EMA
-                    ema1period = j
-                    ema2period = k
-                    ema3period = l
-                    multiplier1 = 2 / (ema1period + 1)
-                    multiplier2 = 2 / (ema2period + 1)
-                    multiplier3 = 2 / (ema3period + 1)
-                    self.pdOHLC["EMA1"] = float("NaN")
-                    self.pdOHLC["EMA2"] = float("NaN")
-                    self.pdOHLC["EMA3"] = float("NaN")
-
-                    # fill the EMA columns with values
-                    somme = 0
-                    for i in range(0, ema1period):
-                        somme += self.pdOHLC.iloc[i][3]
-                    SMA = somme / ema1period
-                    self.pdOHLC.iloc[ema1period - 1, 4] = SMA
-                    for i in range(ema1period, len(self.pdOHLC['Open'])):
-                        self.pdOHLC.iloc[i, 4] = (self.pdOHLC.iloc[i, 3] * multiplier1) + (
-                                self.pdOHLC.iloc[i - 1, 4] * (1 - multiplier1))
-                    somme = 0
-                    for i in range(0, ema2period):
-                        somme += self.pdOHLC.iloc[i][3]
-                    SMA = somme / ema2period
-                    self.pdOHLC.iloc[ema2period - 1, 5] = SMA
-                    for i in range(ema2period, len(self.pdOHLC['Open'])):
-                        self.pdOHLC.iloc[i, 5] = (self.pdOHLC.iloc[i, 3] * multiplier2) + (
-                                self.pdOHLC.iloc[i - 1, 4] * (1 - multiplier2))
-                    somme = 0
-                    for i in range(0, ema3period):
-                        somme += self.pdOHLC.iloc[i][3]
-                    SMA = somme / ema3period
-                    self.pdOHLC.iloc[ema3period - 1, 6] = SMA
-                    for i in range(ema3period, len(self.pdOHLC['Open'])):
-                        self.pdOHLC.iloc[i, 6] = (self.pdOHLC.iloc[i, 3] * multiplier3) + (
-                                self.pdOHLC.iloc[i - 1, 4] * (1 - multiplier3))
-
-                    # backTest
-                    buying = False
-                    buyPrice = 0
-                    K = 1
-                    tradeCount = 0
-                    for i in range(len(self.pdOHLC['Open'])):
-                        if (self.pdOHLC.iloc[i][4] < self.pdOHLC.iloc[i][3]) and \
-                                (self.pdOHLC.iloc[i][5] < self.pdOHLC.iloc[i][3]) and \
-                                (self.pdOHLC.iloc[i][6] < self.pdOHLC.iloc[i][3]) and not buying:
-                            buyPrice = self.pdOHLC.iloc[i][3]
-                            buying = True
-                        elif ((self.pdOHLC.iloc[i][4] > self.pdOHLC.iloc[i][3]) or
-                              (self.pdOHLC.iloc[i][5] > self.pdOHLC.iloc[i][3])
-                              or (self.pdOHLC.iloc[i][6] > self.pdOHLC.iloc[i][3])) and buying:
-                            sellPrice = self.pdOHLC.iloc[i][3]
-                            # tradePerf = ((sellPrice - buyPrice) / buyPrice)
-                            tradeCount += 1
-                            # print('trade n°'+str(tradeCount)+' '+str(tradePerf*100)+' %')
-                            K = K * (sellPrice / buyPrice)
-                            buying = False
-                    stratPerf = (K - 1) * 100
-                    if stratPerf > bestPerf:
-                        bestPerf = stratPerf
-                        bestEMA1 = ema1period
-                        bestEMA2 = ema2period
-                        bestEMA3 = ema3period
-                    print('EMA ' + str(ema1period) + ', EMA ' + str(ema2period) + ', EMA ' + str(ema3period) +
-                          ' Performance: ' + str("%.2f" % stratPerf) + ' % with ' + str(tradeCount) + ' trades')
-        print('Asset Performance from ' + str(self.pdOHLC.index[0]) + ' to ' +
-              str(self.pdOHLC.index[-1]) + ' : ' + str(self.assetPerformance) + ' %')
-        print('The best performance is: EMA ' + str(bestEMA1) + ', EMA ' + str(bestEMA2)
-              + ', EMA3 ' + str(bestEMA3) + ' ' + str("%.2f" % bestPerf) + ' %')
+                 addplot=otherPlots, scale_width_adjustment=dict(lines=0.85), title=self.assetTicker,
+                 ylabel="Price")
