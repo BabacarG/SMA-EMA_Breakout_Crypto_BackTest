@@ -1,7 +1,7 @@
 # SMA-EMA_Breakout_Strategy_BackTest
   A tool connected to the binance API to determine which moving average period is the most optimal to use for a given cryptocurrency.
 
-  Warning: This not investment advice.
+  Warning: This is not investment advice.
   
   This python script is a tool to compare the past performances of a well known trading strategy applied to cryptocurrencies. The strategy is the Moving Average breakout
   strategy. You will find below links to explanations of the operating principles of the concepts mentioned. This strategy consists of calculating a moving average of period x
