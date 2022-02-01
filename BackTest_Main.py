@@ -1,8 +1,8 @@
 from CryptoBackTest import *
 
 # Paste your own api keys which you can get by creating a Binance account
-api_key = 'WDpBVEVMc3wjLCAYQ4opBgpHNhDlT0ClZH25OZml4C0ocygkDR30JggMOr5kKYrK'
-api_secret_key = '51iVBjoSMhu4NkU85d7SiVrGpMwOB2eyPTHbvKe1zW1iHWquhXqg3rIwcu29anKK'
+api_key = ''
+api_secret_key = ''
 
 # Enter a ticker symbol (ex: ETHUSDT, ETHBTC, SOLUSDT...)
 asset = "BTCUSDT"
