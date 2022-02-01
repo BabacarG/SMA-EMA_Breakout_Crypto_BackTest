@@ -8,7 +8,7 @@
   and buying the asset when the price goes above the moving average and selling when the price goes below. What is interesting here is to determine which of the moving average
   periods is the most profitable. You can therefore enter a range of periods to compare. You can also choose to use either the Simple Moving Average (SMA) or the Exponential 
   Moving Average (EMA). Market price data is pulled from Binance API. The results of the backtest will be printed in the console and a graph of the asset price will be displayed
-  with the equity curve in blue and the EMA/SMA in green. The starting capital is fixed at the price of the asset at the start of the backtest. This means that if the equity       curve is above the price of the asset you outperform the asset and vice versa.
+  with the equity curve in blue and the EMA/SMA in green. The starting capital is fixed at the price of the asset at the start of the backtest. This means that if the equity       curve is above the price of the asset you outperform the asset and vice versa. Transaction fees are not simulated.
   
   In my opinion, a good way to improve this strategy should be to add money management rules.
   
