@@ -10,10 +10,14 @@ asset = "BTCUSDT"
 # Available timeframes : 1min, 3min, 5min, 15min, 30min, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1m
 timeFrame = "1d"
 
-# Choose the start date of the backtest (Follow this format: "1 Jan, 2020")
+# Choose a start date for the data (Follow this format: "1 Jan, 2020")
 startDate = "1 Jan, 2015"
 
-test1 = CryptoBackTest(api_key, api_secret_key, asset, timeFrame, startDate)
-# test1.buysell1EMA(2, 5)
-test1.buysell1SMA(2, 5)
-# test1.plot()
+backtest1 = CryptoBackTest(api_key, api_secret_key, asset, timeFrame, startDate)
+
+# You can display the raw data graph but a graph will be opened in anyway after a backtest
+# backtest1.plot()
+
+# Choose wether you want to use SMA or EMA
+backtest1.buysell1sma(2, 10)
+# backtest1.buysell1ema(2, 10)

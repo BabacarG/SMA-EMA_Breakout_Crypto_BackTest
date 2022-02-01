@@ -11,15 +11,8 @@ class CryptoBackTest:
         client = Client(api_key, api_secret)
         self.assetTicker = asset
         self.bestPeriod = 0
-        # prices = client.get_all_tickers()
-        #
-        # for price in prices:
-        #     print(prices)
-
-        # return string: Open time,Open,High,Low,Close,Volume,Close time,Quote asset volume,Number of trades,
-        # Taker buy base asset,Taker buy quote asset volume,Ignore.
-
         binanceTimeFrame = ""
+
         if timeFrame == "1min":
             binanceTimeFrame = Client.KLINE_INTERVAL_1MINUTE
         elif timeFrame == "3min":
@@ -51,15 +44,14 @@ class CryptoBackTest:
         elif timeFrame == "1m":
             binanceTimeFrame = Client.KLINE_INTERVAL_1MONTH
 
-
+        # return: Open time,Open,High,Low,Close,Volume,Close time,Quote asset volume,Number of trades,
+        # Taker buy base asset,Taker buy quote asset volume,Ignore.
         candles = client.get_historical_klines(asset, binanceTimeFrame, startDate)
         csvfile = open('OHLC.csv', 'w', newline='')
         candlestick_writer = csv.writer(csvfile, delimiter=',')
 
         for candlestick in candles:
-            # print(candlestick)
             candlestick_writer.writerow(candlestick)
-        # print(len(candles))
 
         # convert csv into dataframe to plot
         self.pdOHLC = pd.read_csv('OHLC.csv', index_col=False, parse_dates=True, header=None)
@@ -68,13 +60,11 @@ class CryptoBackTest:
         for i in range(len(self.pdOHLC[0])):
             epoch = int(self.pdOHLC.iloc[i][0]) / 1000
             date_time = datetime.datetime.fromtimestamp(epoch)
-            # date_time = pd.to_datetime(epoch)
             self.pdOHLC.at[i, 0] = date_time
 
         # give column names
         self.pdOHLC.columns = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Close time', 'Quote asset volume',
                                'Number of trades', 'Taker buy base asset', 'Taker buy quote asset volume', 'Ignore']
-        # print(pd4hours)
 
         # drop useless columns
         self.pdOHLC.drop(columns=['Volume', 'Close time', 'Quote asset volume', 'Number of trades',
@@ -86,35 +76,10 @@ class CryptoBackTest:
         csvfile.close()
         print("Data collected")
 
-    # 2-7200 (1h)
-
-    # 2 - 1800 (4h)
-    # Asset Performance from 2018-06-14 14:00:00 to 2022-01-14 21:00:00 : 578.71 %s
-    # The best performance is SMA 261: 2502.18 %
-    # Number of trades: 140
-    # Max Drawdown: -32.51 %
-    # Winning trades average: 36.81 %
-    # Losing trades average: -1.43 %
-    # Buying trades average: 6.87 %
-    # Selling trades average: 0.64 %
-
-    # 2 - 300 (1d)
-    # Asset Performance from 2018-06-13 02:00:00 to 2021-12-09 01:00:00 : 655.56 %
-    # The best performance is SMA 124: 1591.12 %
-    # Number of trades: 14
-    # Max Drawdown: -30.76 %
-    # Winning trades average: 100.54 %
-    # Losing trades average: -7.76 %
-    # Buying trades average: 87.58 %
-    # Selling trades average: 5.20 %
-
-    # 2 - 100 (3d)
-
-    def buysell1SMA(self, start, end):
+    def buysell1sma(self, start, end):
         print('Processing the backtest from ' + str(self.pdOHLC.index[end]))
-        # print(self.pd4hours)
 
-        # BackTest with 1 SMA Buy and Sell
+        # BackTest with 1 SMA Buying and Selling
         bestPerf = -101
         self.bestPeriod = 0
         bestSMADD = 0
@@ -191,6 +156,7 @@ class CryptoBackTest:
                     top = K
                 elif ((K - top) / top) * 100 < maxDrawdown:
                     maxDrawdown = ((K - top) / top) * 100
+
             if sellingTradesCount == 0:
                 sellingTradesAvg = 0
             else:
@@ -242,11 +208,10 @@ class CryptoBackTest:
         self.pdOHLC = bestChart
         self.plot()
 
-    def buysell1EMA(self, start, end):
+    def buysell1ema(self, start, end):
         print('Processing the backtest from ' + str(self.pdOHLC.index[end]))
-        # print(self.pd4hours)
 
-        # BackTest with 1 EMA Buy and Sell
+        # BackTest with 1 EMA Buying and Selling
         bestPerf = -101
         self.bestPeriod = 0
         bestEMADD = 0
