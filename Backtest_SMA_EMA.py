@@ -6,8 +6,10 @@ import mplfinance as mpf
 
 
 class CryptoBackTest:
-    def __init__(self, api_key, api_secret, asset, timeFrame, startDate):
+    def __init__(self, asset, timeFrame, startDate):
         print("Collecting Data...")
+        api_key = ''
+        api_secret = ''
         client = Client(api_key, api_secret)
         self.assetTicker = asset
         self.bestPeriod = 0
@@ -350,7 +352,6 @@ class CryptoBackTest:
         self.pdOHLC = bestChart
         self.plot()
 
-    # plot candlestick
     def plot(self):
         if ('EMA' in self.pdOHLC.columns) and ('Equity' in self.pdOHLC.columns):
             otherPlots = [mpf.make_addplot(self.pdOHLC['EMA'], color='g', secondary_y=False),
