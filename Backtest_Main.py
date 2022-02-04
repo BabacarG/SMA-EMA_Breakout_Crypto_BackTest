@@ -16,5 +16,5 @@ backtest1 = CryptoBackTest(asset, timeFrame, startDate)
 # backtest1.plot()
 
 # Choose if you want to use SMA or EMA and enter as parameter the range of SMA/EMA periods you want to compare
-backtest1.buysell1sma(2, 100)
-# backtest1.buysell1ema(2, 10)
+# backtest1.buysell1sma(2, 75)
+backtest1.buysell1ema(2, 300)

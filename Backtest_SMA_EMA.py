@@ -56,7 +56,7 @@ class CryptoBackTest:
             candlestick_writer.writerow(candlestick)
 
         # convert csv into dataframe to plot
-        self.pdOHLC = pd.read_csv('OHLC.csv', index_col=False, parse_dates=True, header=None)
+        self.pdOHLC = pd.read_csv('OHLC.csv', index_col=False, parse_dates=True, header=None, quoting=csv.QUOTE_NONE)
 
         # convert epoch time to DateTime
         for i in range(len(self.pdOHLC[0])):
@@ -74,8 +74,7 @@ class CryptoBackTest:
 
         # put datetime as index
         self.pdOHLC.set_index('Date', inplace=True)
-        # print(pd4hours)
-        csvfile.close()
+        # csvfile.close()
         print("Data collected")
 
     def buysell1sma(self, start, end):
