@@ -1,6 +1,4 @@
 from binance.client import Client
-import csv
-import datetime
 import pandas as pd
 import mplfinance as mpf
 
@@ -46,35 +44,26 @@ class CryptoBackTest:
         elif timeFrame == "1m":
             binanceTimeFrame = Client.KLINE_INTERVAL_1MONTH
 
-        # return: Open time,Open,High,Low,Close,Volume,Close time,Quote asset volume,Number of trades,
-        # Taker buy base asset,Taker buy quote asset volume,Ignore.
+        # Pull the data from the API
         candles = client.get_historical_klines(asset, binanceTimeFrame, startDate)
-        csvfile = open('OHLC.csv', 'w', newline='')
-        candlestick_writer = csv.writer(csvfile, delimiter=',')
 
-        for candlestick in candles:
-            candlestick_writer.writerow(candlestick)
+        self.pdOHLC = pd.DataFrame(candles, columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Close time',
+                                                     'Quote asset volume', 'Number of trades', 'Taker buy base asset',
+                                                     'Taker buy quote asset volume', 'Ignore'])
 
-        # convert csv into dataframe to plot
-        self.pdOHLC = pd.read_csv('OHLC.csv', index_col=False, parse_dates=True, header=None, quoting=csv.QUOTE_NONE)
-
-        # convert epoch time to DateTime
-        for i in range(len(self.pdOHLC[0])):
-            epoch = int(self.pdOHLC.iloc[i][0]) / 1000
-            date_time = datetime.datetime.fromtimestamp(epoch)
-            self.pdOHLC.at[i, 0] = date_time
-
-        # give column names
-        self.pdOHLC.columns = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Close time', 'Quote asset volume',
-                               'Number of trades', 'Taker buy base asset', 'Taker buy quote asset volume', 'Ignore']
+        # Convert the date from object dtypes to numeric dtypes
+        to_convert = ['Open', 'High', 'Low', 'Close']
+        self.pdOHLC[to_convert] = self.pdOHLC[to_convert].apply(pd.to_numeric, axis=1)
 
         # drop useless columns
         self.pdOHLC.drop(columns=['Volume', 'Close time', 'Quote asset volume', 'Number of trades',
                                   'Taker buy base asset', 'Taker buy quote asset volume', 'Ignore'], inplace=True)
 
+        # epoch unix dates into datetime
+        self.pdOHLC["Date"] = pd.to_datetime(self.pdOHLC["Date"], unit='ms')
+
         # put datetime as index
         self.pdOHLC.set_index('Date', inplace=True)
-        # csvfile.close()
         print("Data collected")
 
     def buysell1sma(self, start, end):
